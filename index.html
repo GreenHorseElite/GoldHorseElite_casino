@@ -3,28 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Клуб Слотов</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Fruit Cocktail Slot</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: #0d001a;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .casino-lobby, .slot-screen {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            max-height: 850px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(180deg, #1f003b 0%, #0a0012 100%);
+            padding: 8px;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, #2a0052, #46007a);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #7b1fa2;
+            font-size: 12px;
+        }
+
+        .lobby-badge {
+            background: #d32f2f;
+            color: #fff;
+            padding: 3px 8px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .bank-box {
+            background: #2e7d32;
+            color: #fff;
+            padding: 3px 8px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .balance-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #111;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #ffd700;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        /* Лобби сетка */
+        .section-title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin: 8px 0;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 5px;
+            flex: 1;
+        }
+
+        .game-card {
+            background: rgba(45, 0, 77, 0.6);
+            border: 2px solid #9c27b0;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .game-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .fruit-bg { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .monkey-bg { background: linear-gradient(135deg, #f7b733, #fc4a1a); }
+        .resident-bg { background: linear-gradient(135deg, #38ef7d, #11998e); }
+        .lucky-bg { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); }
+
+        .game-name {
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* ЭКРАН ИГРЫ СЛОТА */
+        .slot-header-info {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0,0,0,0.5);
+            padding: 4px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #ccc;
+            border: 1px solid #4a0072;
+        }
+
+        .slot-header-info span b {
+            color: #ffd700;
+        }
+
+        /* Игровое поле 5x3 */
+        .slot-machine-container {
+            background: #000033;
+            border: 3px solid #1e88e5;
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 10px rgba(30, 136, 229, 0.5);
+        }
+
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+
+        .slot-cell {
+            background: #ffffff;
+            height: 55px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border: 2px solid #ffd700;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        .win-line-msg {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #00ffcc;
+            height: 18px;
+        }
+
+        /* ПАНЕЛЬ УПРАВЛЕНИЯ В СТИЛЕ КАЗИНО */
+        .control-panel {
+            background: #110022;
+            border: 2px solid #4a0072;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .top-buttons-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        .btn-action {
+            flex: 1;
+            background: linear-gradient(135deg, #4a148c, #7b1fa2);
+            border: 1px solid #ab47bc;
+            color: #fff;
+            padding: 8px 4px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-action:active {
+            transform: scale(0.96);
+        }
+
+        /* Центральный блок: Старт и Линии */
+        .center-control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lines-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            width: 90px;
+        }
+
+        .line-btn {
+            background: #222;
+            border: 1px solid #555;
+            color: #aaa;
+            font-size: 10px;
+            padding: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .line-btn.active {
+            background: #d32f2f;
+            border-color: #ff5252;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Большая круглая кнопка СТАРТ */
+        .start-btn {
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #ffeb3b 0%, #f57c00 100%);
+            border: 4px solid #fff;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            color: #3e2723;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+        }
+
+        .start-btn:active {
+            transform: scale(0.93);
+        }
+
+        /* Нижнее меню лобби */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            background: #12001f;
+            padding: 6px 0;
+            border-top: 1px solid #3b0066;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #8e8e93;
+            font-size: 9px;
+            cursor: pointer;
+        }
+        .nav-item span { font-size: 16px; }
+        .nav-item.active { color: #ffd700; }
+    </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
+    <!-- ЛОББИ -->
     <div class="casino-lobby" id="lobby-screen">
-        <!-- Верхняя панель -->
         <div class="top-bar">
             <div class="lobby-badge">ЛОББИ</div>
             <div class="bank-box">БАНК: 16060</div>
-            <div class="balance-container">
-                <span class="coin-icon">🪙</span>
-                <span id="lobby-balance">1000</span>
-            </div>
+            <div class="balance-container">🪙 <span id="lobby-balance">11795</span></div>
         </div>
 
         <div class="section-title">🍒 ИГРОВЫЕ АВТОМАТЫ 🍒</div>
 
-        <!-- Сетка игр -->
         <div class="games-grid">
-            <div class="game-card" onclick="openSlotMachine()">
+            <div class="game-card" onclick="openSlot()">
                 <div class="game-img fruit-bg">🍓</div>
                 <div class="game-name">FRUIT COCKTAIL</div>
             </div>
@@ -42,134 +320,201 @@
             </div>
         </div>
 
-        <!-- Нижнее меню -->
         <div class="bottom-nav">
             <div class="nav-item active"><span>🎰</span><p>Слоты</p></div>
-            <div class="nav-item" onclick="alert('Скоро!')"><span>🏆</span><p>Турниры</p></div>
-            <div class="nav-item" onclick="alert('Скоро!')"><span>📊</span><p>Лидеры</p></div>
-            <div class="nav-item" onclick="alert('Скоро!')"><span>🎁</span><p>Бонусы</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>🏆</span><p>Турниры</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>📊</span><p>Лидеры</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>🎁</span><p>Бонусы</p></div>
         </div>
     </div>
 
 
-    <!-- ЭКРАН САМОГО СЛОТА (Скрыт по умолчанию) -->
+    <!-- ЭКРАН ИГРЫ (ФРУКТОВЫЙ КОКТЕЙЛЬ) -->
     <div class="slot-screen" id="slot-screen" style="display: none;">
+        
         <div class="top-bar">
-            <div class="lobby-badge" onclick="closeSlotMachine()" style="cursor: pointer;">⬅ НАЗАД</div>
-            <div class="balance-container">
-                <span class="coin-icon">🪙</span>
-                <span id="slot-balance">1000</span>
+            <div class="lobby-badge" onclick="closeSlot()">⬅ ЛОББИ</div>
+            <div class="bank-box">БАНК: 16060</div>
+            <div class="balance-container">🪙 <span id="slot-balance">11795</span></div>
+        </div>
+
+        <!-- Инфо-панель сверху слота -->
+        <div class="slot-header-info">
+            <span>Ставка/лин: <b id="ui-bet-per-line">1</b></span>
+            <span>Линий: <b id="ui-lines-count">9</b></span>
+            <span>Баланс: <b id="ui-total-balance">11795</b></span>
+            <span>Полная ставка: <b id="ui-total-bet">9</b></span>
+        </div>
+
+        <!-- ИГРОВОЕ ПОЛЕ 5х3 -->
+        <div class="slot-machine-container">
+            <div class="slot-grid" id="slot-grid">
+                <!-- Сгенерируется скриптом (15 ячеек: 5 колонок по 3 ряда) -->
             </div>
         </div>
 
-        <div class="slot-title">🍓 FRUIT COCKTAIL 🍋</div>
+        <div class="win-line-msg" id="win-msg">Сделайте ставку и нажмите СТАРТ!</div>
 
-        <!-- Барабаны слота (3 окошка) -->
-        <div class="slot-machine-box">
-            <div class="reels-container">
-                <div class="reel" id="reel1">🍒</div>
-                <div class="reel" id="reel2">🍋</div>
-                <div class="reel" id="reel3"> 🍇</div>
+        <!-- КНОПКИ УПРАВЛЕНИЯ -->
+        <div class="control-panel">
+            
+            <div class="top-buttons-row">
+                <button class="btn-action" onclick="changeBet()">СТАВКА</button>
+                <button class="btn-action" onclick="maxBet()">МАКС СТАВКА</button>
+                <button class="btn-action" onclick="alert('Автоигра активна')">АВТОИГРА</button>
+                <button class="btn-action" onclick="alert('Правила: собирайте от 3 одинаковых фруктов в ряд!')">СПРАВКА</button>
             </div>
-            <div id="win-message" class="win-message">Сделайте ставку и крутите!</div>
+
+            <div class="center-control-row">
+                <!-- Выбор линий (1 до 9) -->
+                <div class="lines-selector" id="lines-selector">
+                    <!-- Заполним скриптом кнопки линий 1-9 -->
+                </div>
+
+                <!-- БОЛЬШАЯ КРУГЛАЯ КНОПКА СТАРТ -->
+                <button class="start-btn" onclick="startSpin()">СТАРТ</button>
+
+                <!-- Динамик / Звук -->
+                <button class="btn-action" style="width: 50px; height: 50px; border-radius: 50%; font-size: 16px;" onclick="alert('Звук включен')">🔊</button>
+            </div>
+
         </div>
 
-        <!-- Панель управления ставкой и кнопкой -->
-        <div class="slot-controls">
-            <div class="bet-box">
-                <span>Ставка: <b>10</b></span>
-            </div>
-            <button class="spin-btn" onclick="spinSlots()">КРУТИТЬ</button>
-        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Общий баланс игрока
-        let balance = 1000;
-        const bet = 10; // Стоимость одной прокрутки
+        let balance = 11795;
+        let betPerLine = 1;
+        let activeLines = 9; // от 1 до 9
 
-        // Массив возможных символов
-        const symbols = ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '🍓'];
+        const symbols = ['🍓', '🍉', '🍎', '🍑', '🍐', '🍒', '🍋', '🍇'];
 
-        function updateBalances() {
+        // Создаем ячейки сетки 5х3 (15 штук)
+        const gridElement = document.getElementById('slot-grid');
+        for (let i = 0; i < 15; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'slot-cell';
+            cell.id = `cell-${i}`;
+            cell.innerText = symbols[i % symbols.length];
+            gridElement.appendChild(cell);
+        }
+
+        // Создаем кнопки выбора линий (1, 3, 5, 7, 9)
+        const linesContainer = document.getElementById('lines-selector');
+        [1, 3, 5, 7, 9].forEach(num => {
+            const btn = document.createElement('div');
+            btn.className = `line-btn ${num === activeLines ? 'active' : ''}`;
+            btn.innerText = `${num} лин`;
+            btn.onclick = () => setLines(num);
+            btn.id = `line-btn-${num}`;
+            linesContainer.appendChild(btn);
+        });
+
+        function updateUI() {
             document.getElementById('lobby-balance').innerText = balance;
             document.getElementById('slot-balance').innerText = balance;
+            document.getElementById('ui-total-balance').innerText = balance;
+            document.getElementById('ui-bet-per-line').innerText = betPerLine;
+            document.getElementById('ui-lines-count').innerText = activeLines;
+            document.getElementById('ui-total-bet').innerText = betPerLine * activeLines;
         }
 
-        function openSlotMachine() {
+        function openSlot() {
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('slot-screen').style.display = 'flex';
-            updateBalances();
+            updateUI();
         }
 
-        function closeSlotMachine() {
+        function closeSlot() {
             document.getElementById('slot-screen').style.display = 'none';
             document.getElementById('lobby-screen').style.display = 'flex';
         }
 
-        // Логика вращения слота
-        function spinSlots() {
-            if (balance < bet) {
-                alert('Недостаточно монет! Пополните баланс.');
+        function setLines(num) {
+            activeLines = num;
+            document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`line-btn-${num}`).classList.add('active');
+            updateUI();
+        }
+
+        function changeBet() {
+            betPerLine = betPerLine >= 5 ? 1 : betPerLine + 1;
+            updateUI();
+        }
+
+        function maxBet() {
+            betPerLine = 5;
+            activeLines = 9;
+            setLines(9);
+            updateUI();
+        }
+
+        // АНИМАЦИЯ И ЗАПУСК СЛОТА
+        function startSpin() {
+            const totalBet = betPerLine * activeLines;
+            if (balance < totalBet) {
+                alert('Недостаточно средств на балансе!');
                 return;
             }
 
-            // Списываем ставку
-            balance -= bet;
-            updateBalances();
+            balance -= totalBet;
+            updateUI();
 
-            document.getElementById('win-message').innerText = 'Крутим... 🎰';
-            document.getElementById('win-message').style.color = '#fff';
+            document.getElementById('win-msg').innerText = 'Крутим барабаны... 🎰';
+            document.getElementById('win-msg').style.color = '#fff';
 
-            // Эффект быстрой смены символов (анимация)
+            // Эффект быстрой смены символов
             let counter = 0;
-            const animInterval = setInterval(() => {
-                document.getElementById('reel1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                document.getElementById('reel2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                document.getElementById('reel3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            const spinInterval = setInterval(() => {
+                for (let i = 0; i < 15; i++) {
+                    const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+                    document.getElementById(`cell-${i}`).innerText = randomSym;
+                }
                 counter++;
 
-                if (counter > 10) {
-                    clearInterval(animInterval);
-                    finishSpin();
+                if (counter > 12) {
+                    clearInterval(spinInterval);
+                    finalizeSpin();
                 }
-            }, 80);
+            }, 60);
         }
 
-        // Определение результата
-        function finishSpin() {
-            // Выбираем финальные случайные символы
-            const r1 = symbols[Math.floor(Math.random() * symbols.length)];
-            const r2 = symbols[Math.floor(Math.random() * symbols.length)];
-            const r3 = symbols[Math.floor(Math.random() * symbols.length)];
-
-            document.getElementById('reel1').innerText = r1;
-            document.getElementById('reel2').innerText = r2;
-            document.getElementById('reel3').innerText = r3;
-
-            const msg = document.getElementById('win-message');
-
-            // Проверяем выигрыш (если все 3 символа одинаковые)
-            if (r1 === r2 && r2 === r3) {
-                const winAmount = bet * 20; // Выигрыш в 20 раз больше ставки
-                balance += winAmount;
-                msg.innerText = `🎉 ДЖЕКПОТ! Вы выиграли +${winAmount} 🪙`;
-                msg.style.color = '#ffd700';
-            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-                const winAmount = bet * 2; // Небольшой выигрыш за 2 совпадения
-                balance += winAmount;
-                msg.innerText = `✨ Выигрыш линии: +${winAmount} 🪙`;
-                msg.style.color = '#00ffcc';
-            } else {
-                msg.innerText = 'Эх, повезет в следующий раз! 😢';
-                msg.style.color = '#ff4d4d';
+        // РЕЗУЛЬТАТЫ И ВЫИГРЫШ
+        function finalizeSpin() {
+            // Генерируем финальные иконки для 15 ячеек
+            const finalIcons = [];
+            for (let i = 0; i < 15; i++) {
+                const sym = symbols[Math.floor(Math.random() * symbols.length)];
+                finalIcons.push(sym);
+                document.getElementById(`cell-${i}`).innerText = sym;
             }
 
-            updateBalances();
+            // Простая проверка выигрыша (если в среднем ряду выпало совпадение)
+            let win = 0;
+            // Проверяем центральный ряд (ячейки 5, 6, 7, 8, 9)
+            if (finalIcons[5] === finalIcons[6] && finalIcons[6] === finalIcons[7]) {
+                win = betPerLine * activeLines * 15;
+            } else if (finalIcons[6] === finalIcons[7] && finalIcons[7] === finalIcons[8]) {
+                win = betPerLine * activeLines * 10;
+            }
+
+            const msg = document.getElementById('win-msg');
+            if (win > 0) {
+                balance += win;
+                msg.innerText = `🎉 ВЫИГРЫШ ПО ЛИНИЯМ: +${win} 🪙`;
+                msg.style.color = '#00ffcc';
+            } else {
+                msg.innerText = 'Повезет в следующий раз!';
+                msg.style.color = '#ff5252';
+            }
+
+            updateUI();
         }
+
+        updateUI();
     </script>
 </body>
 </html>
