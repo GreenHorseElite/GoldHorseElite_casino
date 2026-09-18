@@ -3,88 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Клуб Слотов - Лобби</title>
+    <title>Клуб Слотов</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-    <div class="casino-lobby">
-        
-        <!-- Верхняя панель казино -->
+    <div class="casino-lobby" id="lobby-screen">
+        <!-- Верхняя панель -->
         <div class="top-bar">
             <div class="lobby-badge">ЛОББИ</div>
             <div class="bank-box">БАНК: 16060</div>
             <div class="balance-container">
                 <span class="coin-icon">🪙</span>
-                <span id="balance">16060</span>
+                <span id="lobby-balance">1000</span>
             </div>
         </div>
 
-        <!-- Заголовок раздела -->
         <div class="section-title">🍒 ИГРОВЫЕ АВТОМАТЫ 🍒</div>
 
-        <!-- Сетка игр (каталог слотов) -->
+        <!-- Сетка игр -->
         <div class="games-grid">
-            
-            <!-- Игра 1: Fruit Cocktail (Клубнички) -->
-            <div class="game-card" onclick="openGame('Fruit Cocktail')">
+            <div class="game-card" onclick="openSlotMachine()">
                 <div class="game-img fruit-bg">🍓</div>
                 <div class="game-name">FRUIT COCKTAIL</div>
             </div>
-
-            <!-- Игра 2: Crazy Monkey -->
-            <div class="game-card" onclick="openGame('Crazy Monkey')">
+            <div class="game-card" onclick="alert('Скоро!')">
                 <div class="game-img monkey-bg">🐵</div>
                 <div class="game-name">CRAZY MONKEY</div>
             </div>
-
-            <!-- Игра 3: Resident -->
-            <div class="game-card" onclick="openGame('Resident')">
+            <div class="game-card" onclick="alert('Скоро!')">
                 <div class="game-img resident-bg">🔥</div>
                 <div class="game-name">RESIDENT</div>
             </div>
-
-            <!-- Игра 4: Lucky Lady -->
-            <div class="game-card" onclick="openGame('Lucky Lady')">
+            <div class="game-card" onclick="alert('Скоро!')">
                 <div class="game-img lucky-bg">⭐</div>
                 <div class="game-name">LUCKY LADY</div>
             </div>
-
         </div>
 
-        <!-- Нижняя панель навигации (как в реальных приложухах) -->
+        <!-- Нижнее меню -->
         <div class="bottom-nav">
-            <div class="nav-item active">
-                <span>🎰</span>
-                <p>Слоты</p>
-            </div>
-            <div class="nav-item" onclick="showMsg('Турниры скоро!')">
-                <span>🏆</span>
-                <p>Турниры</p>
-            </div>
-            <div class="nav-item" onclick="showMsg('Таблица лидеров пуста')">
-                <span>📊</span>
-                <p>Лидеры</p>
-            </div>
-            <div class="nav-item" onclick="showMsg('Бонусы будут здесь')">
-                <span>🎁</span>
-                <p>Бонусы</p>
+            <div class="nav-item active"><span>🎰</span><p>Слоты</p></div>
+            <div class="nav-item" onclick="alert('Скоро!')"><span>🏆</span><p>Турниры</p></div>
+            <div class="nav-item" onclick="alert('Скоро!')"><span>📊</span><p>Лидеры</p></div>
+            <div class="nav-item" onclick="alert('Скоро!')"><span>🎁</span><p>Бонусы</p></div>
+        </div>
+    </div>
+
+
+    <!-- ЭКРАН САМОГО СЛОТА (Скрыт по умолчанию) -->
+    <div class="slot-screen" id="slot-screen" style="display: none;">
+        <div class="top-bar">
+            <div class="lobby-badge" onclick="closeSlotMachine()" style="cursor: pointer;">⬅ НАЗАД</div>
+            <div class="balance-container">
+                <span class="coin-icon">🪙</span>
+                <span id="slot-balance">1000</span>
             </div>
         </div>
 
+        <div class="slot-title">🍓 FRUIT COCKTAIL 🍋</div>
+
+        <!-- Барабаны слота (3 окошка) -->
+        <div class="slot-machine-box">
+            <div class="reels-container">
+                <div class="reel" id="reel1">🍒</div>
+                <div class="reel" id="reel2">🍋</div>
+                <div class="reel" id="reel3"> 🍇</div>
+            </div>
+            <div id="win-message" class="win-message">Сделайте ставку и крутите!</div>
+        </div>
+
+        <!-- Панель управления ставкой и кнопкой -->
+        <div class="slot-controls">
+            <div class="bet-box">
+                <span>Ставка: <b>10</b></span>
+            </div>
+            <button class="spin-btn" onclick="spinSlots()">КРУТИТЬ</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        function openGame(gameName) {
-            alert('Запуск слота: ' + gameName + '! Скоро здесь откроется сам игровой автомат.');
+        // Общий баланс игрока
+        let balance = 1000;
+        const bet = 10; // Стоимость одной прокрутки
+
+        // Массив возможных символов
+        const symbols = ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '🍓'];
+
+        function updateBalances() {
+            document.getElementById('lobby-balance').innerText = balance;
+            document.getElementById('slot-balance').innerText = balance;
         }
 
-        function showMsg(text) {
-            alert(text);
+        function openSlotMachine() {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('slot-screen').style.display = 'flex';
+            updateBalances();
+        }
+
+        function closeSlotMachine() {
+            document.getElementById('slot-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+        }
+
+        // Логика вращения слота
+        function spinSlots() {
+            if (balance < bet) {
+                alert('Недостаточно монет! Пополните баланс.');
+                return;
+            }
+
+            // Списываем ставку
+            balance -= bet;
+            updateBalances();
+
+            document.getElementById('win-message').innerText = 'Крутим... 🎰';
+            document.getElementById('win-message').style.color = '#fff';
+
+            // Эффект быстрой смены символов (анимация)
+            let counter = 0;
+            const animInterval = setInterval(() => {
+                document.getElementById('reel1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('reel2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('reel3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                counter++;
+
+                if (counter > 10) {
+                    clearInterval(animInterval);
+                    finishSpin();
+                }
+            }, 80);
+        }
+
+        // Определение результата
+        function finishSpin() {
+            // Выбираем финальные случайные символы
+            const r1 = symbols[Math.floor(Math.random() * symbols.length)];
+            const r2 = symbols[Math.floor(Math.random() * symbols.length)];
+            const r3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+            document.getElementById('reel1').innerText = r1;
+            document.getElementById('reel2').innerText = r2;
+            document.getElementById('reel3').innerText = r3;
+
+            const msg = document.getElementById('win-message');
+
+            // Проверяем выигрыш (если все 3 символа одинаковые)
+            if (r1 === r2 && r2 === r3) {
+                const winAmount = bet * 20; // Выигрыш в 20 раз больше ставки
+                balance += winAmount;
+                msg.innerText = `🎉 ДЖЕКПОТ! Вы выиграли +${winAmount} 🪙`;
+                msg.style.color = '#ffd700';
+            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+                const winAmount = bet * 2; // Небольшой выигрыш за 2 совпадения
+                balance += winAmount;
+                msg.innerText = `✨ Выигрыш линии: +${winAmount} 🪙`;
+                msg.style.color = '#00ffcc';
+            } else {
+                msg.innerText = 'Эх, повезет в следующий раз! 😢';
+                msg.style.color = '#ff4d4d';
+            }
+
+            updateBalances();
         }
     </script>
 </body>
