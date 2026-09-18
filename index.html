@@ -3,60 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fruit Slot Lobby</title>
+    <title>Клуб Слотов - Лобби</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-    <div class="lobby-container">
-        <!-- Шапка: Профиль и Баланс -->
-        <div class="header">
-            <div class="user-info">
-                <span id="username">Игрок</span>
-            </div>
-            <div class="balance-box">
+    <div class="casino-lobby">
+        
+        <!-- Верхняя панель казино -->
+        <div class="top-bar">
+            <div class="lobby-badge">ЛОББИ</div>
+            <div class="bank-box">БАНК: 16060</div>
+            <div class="balance-container">
                 <span class="coin-icon">🪙</span>
-                <span id="balance">1000</span>
+                <span id="balance">16060</span>
             </div>
         </div>
 
-        <!-- Центральная часть: Логотип и Кнопка игры -->
-        <div class="center-content">
-            <div class="logo">
-                <h1>🍓 FRUIT MIX 🍋</h1>
-                <p>Классический слот</p>
+        <!-- Заголовок раздела -->
+        <div class="section-title">🍒 ИГРОВЫЕ АВТОМАТЫ 🍒</div>
+
+        <!-- Сетка игр (каталог слотов) -->
+        <div class="games-grid">
+            
+            <!-- Игра 1: Fruit Cocktail (Клубнички) -->
+            <div class="game-card" onclick="openGame('Fruit Cocktail')">
+                <div class="game-img fruit-bg">🍓</div>
+                <div class="game-name">FRUIT COCKTAIL</div>
             </div>
 
-            <button class="play-btn" onclick="startGame()">ИГРАТЬ</button>
+            <!-- Игра 2: Crazy Monkey -->
+            <div class="game-card" onclick="openGame('Crazy Monkey')">
+                <div class="game-img monkey-bg">🐵</div>
+                <div class="game-name">CRAZY MONKEY</div>
+            </div>
+
+            <!-- Игра 3: Resident -->
+            <div class="game-card" onclick="openGame('Resident')">
+                <div class="game-img resident-bg">🔥</div>
+                <div class="game-name">RESIDENT</div>
+            </div>
+
+            <!-- Игра 4: Lucky Lady -->
+            <div class="game-card" onclick="openGame('Lucky Lady')">
+                <div class="game-img lucky-bg">⭐</div>
+                <div class="game-name">LUCKY LADY</div>
+            </div>
+
         </div>
 
-        <!-- Нижнее меню -->
-        <div class="footer-menu">
-            <button class="menu-btn" onclick="openRules()">📜 Справка</button>
-            <button class="menu-btn" onclick="openBonus()">🎁 Бонус</button>
+        <!-- Нижняя панель навигации (как в реальных приложухах) -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <span>🎰</span>
+                <p>Слоты</p>
+            </div>
+            <div class="nav-item" onclick="showMsg('Турниры скоро!')">
+                <span>🏆</span>
+                <p>Турниры</p>
+            </div>
+            <div class="nav-item" onclick="showMsg('Таблица лидеров пуста')">
+                <span>📊</span>
+                <p>Лидеры</p>
+            </div>
+            <div class="nav-item" onclick="showMsg('Бонусы будут здесь')">
+                <span>🎁</span>
+                <p>Бонусы</p>
+            </div>
         </div>
+
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const user = tg.initDataUnsafe?.user;
-        if (user && user.first_name) {
-            document.getElementById('username').innerText = user.first_name;
+        function openGame(gameName) {
+            alert('Запуск слота: ' + gameName + '! Скоро здесь откроется сам игровой автомат.');
         }
 
-        function startGame() {
-            alert('Здесь скоро откроется сам игровой автомат со слотами!');
-        }
-
-        function openRules() {
-            alert('Правила игры: собирай линии из фруктов!');
-        }
-
-        function openBonus() {
-            alert('Ежедневный бонус пока недоступен.');
+        function showMsg(text) {
+            alert(text);
         }
     </script>
 </body>
