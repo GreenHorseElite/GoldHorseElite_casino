@@ -212,6 +212,11 @@
             transform: scale(0.96);
         }
 
+        .btn-action.active-mode {
+            background: linear-gradient(135deg, #e65100, #ff8f00);
+            border-color: #ffd54f;
+        }
+
         /* Центральный блок: Старт и Линии */
         .center-control-row {
             display: flex;
@@ -329,7 +334,7 @@
     </div>
 
 
-    <!-- ЭКРАН ИГРЫ (ФРУКТОВЫЙ КОКТЕЙЛЬ) -->
+    <!-- ЭКРАН ИГРЫ -->
     <div class="slot-screen" id="slot-screen" style="display: none;">
         
         <div class="top-bar">
@@ -338,7 +343,6 @@
             <div class="balance-container">🪙 <span id="slot-balance">11795</span></div>
         </div>
 
-        <!-- Инфо-панель сверху слота -->
         <div class="slot-header-info">
             <span>Ставка/лин: <b id="ui-bet-per-line">1</b></span>
             <span>Линий: <b id="ui-lines-count">9</b></span>
@@ -348,34 +352,27 @@
 
         <!-- ИГРОВОЕ ПОЛЕ 5х3 -->
         <div class="slot-machine-container">
-            <div class="slot-grid" id="slot-grid">
-                <!-- Сгенерируется скриптом (15 ячеек: 5 колонок по 3 ряда) -->
-            </div>
+            <div class="slot-grid" id="slot-grid"></div>
         </div>
 
         <div class="win-line-msg" id="win-msg">Сделайте ставку и нажмите СТАРТ!</div>
 
-        <!-- КНОПКИ УПРАВЛЕНИЯ -->
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
         <div class="control-panel">
             
             <div class="top-buttons-row">
                 <button class="btn-action" onclick="changeBet()">СТАВКА</button>
                 <button class="btn-action" onclick="maxBet()">МАКС СТАВКА</button>
-                <button class="btn-action" onclick="alert('Автоигра активна')">АВТОИГРА</button>
-                <button class="btn-action" onclick="alert('Правила: собирайте от 3 одинаковых фруктов в ряд!')">СПРАВКА</button>
+                <button class="btn-action" id="btn-auto" onclick="toggleAutoPlay()">АВТОИГРА</button>
+                <button class="btn-action" onclick="alert('Правила: собирайте совпадения фруктов на линиях!')">СПРАВКА</button>
             </div>
 
             <div class="center-control-row">
-                <!-- Выбор линий (1 до 9) -->
-                <div class="lines-selector" id="lines-selector">
-                    <!-- Заполним скриптом кнопки линий 1-9 -->
-                </div>
+                <div class="lines-selector" id="lines-selector"></div>
 
-                <!-- БОЛЬШАЯ КРУГЛАЯ КНОПКА СТАРТ -->
                 <button class="start-btn" onclick="startSpin()">СТАРТ</button>
 
-                <!-- Динамик / Звук -->
-                <button class="btn-action" style="width: 50px; height: 50px; border-radius: 50%; font-size: 16px;" onclick="alert('Звук включен')">🔊</button>
+                <button class="btn-action" style="width: 50px; height: 50px; border-radius: 50%; font-size: 16px;" onclick="toggleSound()">🔊</button>
             </div>
 
         </div>
@@ -388,11 +385,16 @@
 
         let balance = 11795;
         let betPerLine = 1;
-        let activeLines = 9; // от 1 до 9
+        let activeLines = 9;
+        let isSpinning = false;
+        let autoPlayActive = false;
+        let autoPlayTimer = null;
+        let soundEnabled = true;
 
         const symbols = ['🍓', '🍉', '🍎', '🍑', '🍐', '🍒', '🍋', '🍇'];
+        const availableBets = [1, 2, 3, 5, 10, 20];
 
-        // Создаем ячейки сетки 5х3 (15 штук)
+        // Генерация сетки 5х3 (15 ячеек)
         const gridElement = document.getElementById('slot-grid');
         for (let i = 0; i < 15; i++) {
             const cell = document.createElement('div');
@@ -402,7 +404,7 @@
             gridElement.appendChild(cell);
         }
 
-        // Создаем кнопки выбора линий (1, 3, 5, 7, 9)
+        // Генерация кнопок линий (1, 3, 5, 7, 9)
         const linesContainer = document.getElementById('lines-selector');
         [1, 3, 5, 7, 9].forEach(num => {
             const btn = document.createElement('div');
@@ -429,44 +431,83 @@
         }
 
         function closeSlot() {
+            stopAutoPlay();
             document.getElementById('slot-screen').style.display = 'none';
             document.getElementById('lobby-screen').style.display = 'flex';
         }
 
         function setLines(num) {
+            if (isSpinning) return;
             activeLines = num;
             document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`line-btn-${num}`).classList.add('active');
             updateUI();
         }
 
+        // Кнопка СТАВКА — циклический перебор значений ставки
         function changeBet() {
-            betPerLine = betPerLine >= 5 ? 1 : betPerLine + 1;
+            if (isSpinning) return;
+            let currentIndex = availableBets.indexOf(betPerLine);
+            currentIndex = (currentIndex + 1) % availableBets.length;
+            betPerLine = availableBets[currentIndex];
             updateUI();
         }
 
+        // Кнопка МАКС СТАВКА — максимальная ставка и 9 линий
         function maxBet() {
-            betPerLine = 5;
-            activeLines = 9;
+            if (isSpinning) return;
+            betPerLine = availableBets[availableBets.length - 1]; // Самая большая ставка
             setLines(9);
             updateUI();
         }
 
-        // АНИМАЦИЯ И ЗАПУСК СЛОТА
+        // Кнопка АВТОИГРА — включить/выключить авто-запуск
+        function toggleAutoPlay() {
+            const btnAuto = document.getElementById('btn-auto');
+            if (!autoPlayActive) {
+                autoPlayActive = true;
+                btnAuto.classList.add('active-mode');
+                btnAuto.innerText = 'СТОП АВТО';
+                startSpin(); // Сделать первый спин сразу
+            } else {
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            autoPlayActive = false;
+            const btnAuto = document.getElementById('btn-auto');
+            btnAuto.classList.remove('active-mode');
+            btnAuto.innerText = 'АВТОИГРА';
+            if (autoPlayTimer) {
+                clearTimeout(autoPlayTimer);
+                autoPlayTimer = null;
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            event.target.innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // ЗАПУСК ВРАЩЕНИЯ
         function startSpin() {
+            if (isSpinning) return;
+
             const totalBet = betPerLine * activeLines;
             if (balance < totalBet) {
                 alert('Недостаточно средств на балансе!');
+                stopAutoPlay();
                 return;
             }
 
+            isSpinning = true;
             balance -= totalBet;
             updateUI();
 
             document.getElementById('win-msg').innerText = 'Крутим барабаны... 🎰';
             document.getElementById('win-msg').style.color = '#fff';
 
-            // Эффект быстрой смены символов
             let counter = 0;
             const spinInterval = setInterval(() => {
                 for (let i = 0; i < 15; i++) {
@@ -475,16 +516,15 @@
                 }
                 counter++;
 
-                if (counter > 12) {
+                if (counter > 10) {
                     clearInterval(spinInterval);
                     finalizeSpin();
                 }
-            }, 60);
+            }, 50);
         }
 
-        // РЕЗУЛЬТАТЫ И ВЫИГРЫШ
+        // ПОДСЧЕТ РЕЗУЛЬТАТОВ
         function finalizeSpin() {
-            // Генерируем финальные иконки для 15 ячеек
             const finalIcons = [];
             for (let i = 0; i < 15; i++) {
                 const sym = symbols[Math.floor(Math.random() * symbols.length)];
@@ -492,19 +532,18 @@
                 document.getElementById(`cell-${i}`).innerText = sym;
             }
 
-            // Простая проверка выигрыша (если в среднем ряду выпало совпадение)
+            // Проверяем выигрыш по центральному ряду (индексы 5, 6, 7, 8, 9)
             let win = 0;
-            // Проверяем центральный ряд (ячейки 5, 6, 7, 8, 9)
             if (finalIcons[5] === finalIcons[6] && finalIcons[6] === finalIcons[7]) {
-                win = betPerLine * activeLines * 15;
+                win = betPerLine * activeLines * 12;
             } else if (finalIcons[6] === finalIcons[7] && finalIcons[7] === finalIcons[8]) {
-                win = betPerLine * activeLines * 10;
+                win = betPerLine * activeLines * 8;
             }
 
             const msg = document.getElementById('win-msg');
             if (win > 0) {
                 balance += win;
-                msg.innerText = `🎉 ВЫИГРЫШ ПО ЛИНИЯМ: +${win} 🪙`;
+                msg.innerText = `🎉 ВЫИГРЫШ: +${win} 🪙`;
                 msg.style.color = '#00ffcc';
             } else {
                 msg.innerText = 'Повезет в следующий раз!';
@@ -512,6 +551,18 @@
             }
 
             updateUI();
+            isSpinning = false;
+
+            // Если включена автоигра и хватает денег — крутим дальше через 1.2 секунды
+            if (autoPlayActive) {
+                const totalBet = betPerLine * activeLines;
+                if (balance >= totalBet) {
+                    autoPlayTimer = setTimeout(startSpin, 1200);
+                } else {
+                    alert('Автоигра остановлена: недостаточно средств.');
+                    stopAutoPlay();
+                }
+            }
         }
 
         updateUI();
