@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Slot Lobby</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <div class="lobby-container">
+        <!-- Шапка: Профиль и Баланс -->
+        <div class="header">
+            <div class="user-info">
+                <span id="username">Игрок</span>
+            </div>
+            <div class="balance-box">
+                <span class="coin-icon">🪙</span>
+                <span id="balance">1000</span>
+            </div>
+        </div>
+
+        <!-- Центральная часть: Логотип и Кнопка игры -->
+        <div class="center-content">
+            <div class="logo">
+                <h1>🍓 FRUIT MIX 🍋</h1>
+                <p>Классический слот</p>
+            </div>
+
+            <button class="play-btn" onclick="startGame()">ИГРАТЬ</button>
+        </div>
+
+        <!-- Нижнее меню -->
+        <div class="footer-menu">
+            <button class="menu-btn" onclick="openRules()">📜 Справка</button>
+            <button class="menu-btn" onclick="openBonus()">🎁 Бонус</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+        if (user && user.first_name) {
+            document.getElementById('username').innerText = user.first_name;
+        }
+
+        function startGame() {
+            alert('Здесь скоро откроется сам игровой автомат со слотами!');
+        }
+
+        function openRules() {
+            alert('Правила игры: собирай линии из фруктов!');
+        }
+
+        function openBonus() {
+            alert('Ежедневный бонус пока недоступен.');
+        }
+    </script>
+</body>
+</html>
