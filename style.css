@@ -15,7 +15,7 @@ body {
     overflow: hidden;
 }
 
-.casino-lobby {
+.casino-lobby, .slot-screen {
     width: 100%;
     max-width: 450px;
     height: 100%;
@@ -70,8 +70,7 @@ body {
     font-size: 14px;
 }
 
-/* Заголовок */
-.section-title {
+.section-title, .slot-title {
     text-align: center;
     font-size: 14px;
     font-weight: bold;
@@ -80,7 +79,7 @@ body {
     letter-spacing: 1px;
 }
 
-/* Сетка игр */
+/* Сетка игр в лобби */
 .games-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -100,13 +99,6 @@ body {
     justify-content: space-between;
     padding: 15px 10px;
     cursor: pointer;
-    transition: 0.2s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
-
-.game-card:active {
-    transform: scale(0.96);
-    border-color: #ffd700;
 }
 
 .game-img {
@@ -117,11 +109,9 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 36px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
     margin-bottom: 8px;
 }
 
-/* Стили иконок для атмосферы */
 .fruit-bg { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
 .monkey-bg { background: linear-gradient(135deg, #f7b733, #fc4a1a); }
 .resident-bg { background: linear-gradient(135deg, #38ef7d, #11998e); }
@@ -153,11 +143,77 @@ body {
     cursor: pointer;
 }
 
-.nav-item span {
-    font-size: 18px;
-    margin-bottom: 2px;
+.nav-item span { font-size: 18px; margin-bottom: 2px; }
+.nav-item.active { color: #ffd700; }
+
+/* Стили для экрана слота */
+.slot-machine-box {
+    background: rgba(20, 0, 40, 0.8);
+    border: 3px solid #ff007f;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex: 1;
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
 }
 
-.nav-item.active, .nav-item:hover {
-    color: #ffd700;
+.reels-container {
+    display: flex;
+    gap: 15px;
+}
+
+.reel {
+    width: 75px;
+    height: 90px;
+    background: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 45px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    border: 2px solid #ffd700;
+}
+
+.win-message {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    min-height: 20px;
+}
+
+.slot-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1a0033;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #550080;
+    margin-top: 10px;
+}
+
+.bet-box {
+    font-size: 14px;
+    color: #ccc;
+}
+
+.spin-btn {
+    background: linear-gradient(135deg, #00ff87, #60efff);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 255, 135, 0.4);
+}
+
+.spin-btn:active {
+    transform: scale(0.95);
 }
