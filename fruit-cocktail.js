@@ -1,367 +1,211 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+// Инициализация игровых переменных
+let balance = 1000;
+let currentBet = 10;
+let linesCount = 9;
+let isSpinning = -0; // Флаг анимации вращения
 
-let balance = localStorage.getItem('slot_balance') ? parseInt(localStorage.getItem('slot_balance')) : 11795;
-let totalBet = 90;
-let activeLines = 9;
-let isSpinning = false;
-let autoPlayActive = false;
-let autoPlayTimer = null;
-let soundEnabled = true;
-let currentHelpPage = 1;
-
-// Символы: 🍓(клубника - бонус), 🍉(арбуз), 🍐(груша), 🍎(яблоко), 🍋(лимон), 🍑(персик), 🍒(вишня), 🟦(коктейль - вайлд)
-const symbols = ['🍓', '🍉', '🍐', '🍎', '🍋', '🍑', '🍒', '🟦'];
-
-// Коэффициенты выплат за 3, 4, 5 символов в линии
-const payTable = {
-    '🟦': { 3: 100, 4: 500, 5: 2000 }, // Коктейль (Wild)
-    '🍉': { 3: 20,  4: 100, 5: 500  }, // Арбуз
-    '🍐': { 3: 10,  4: 50,  5: 200  }, // Груша
-    '🍎': { 3: 5,   4: 20,  5: 100  }, // Яблоко
-    '🍋': { 3: 5,   4: 10,  5: 50   }, // Лимон
-    '🍑': { 3: 3,   4: 5,   5: 20   }, // Персик
-    '🍒': { 3: 2,   4: 3,   5: 10   }  // Вишня
-};
-
-// 9 классических линий выплат (индексы строк 0, 1, 2 для колонок 0..4)
-const linesMap = [
-    [1, 1, 1, 1, 1], // Линия 1: центр
-    [0, 0, 0, 0, 0], // Линия 2: верх
-    [2, 2, 2, 2, 2], // Линия 3: низ
-    [0, 1, 2, 1, 0], // Линия 4: V-образная
-    [2, 1, 0, 1, 2], // Линия 5: Λ-образная
-    [0, 0, 1, 2, 2], // Линия 6
-    [2, 2, 1, 0, 0], // Линия 7
-    [1, 0, 1, 0, 1], // Линия 8
-    [1, 2, 1, 2, 1]  // Линия 9
+// Доступные символы (названия соответствуют классам спрайта)
+const symbols = [
+    'strawberry', 
+    'watermelon', 
+    'pear', 
+    'apple', 
+    'lemon', 
+    'peach', 
+    'cherry', 
+    'blue-cocktail' // Ваилд (коктейль)
 ];
 
-// Генерация сетки 5х3
-const gridElement = document.getElementById('slot-grid');
-const cells = [];
+// Таблица выплат (множители за 3 одинаковых символа на линии)
+const payTable = {
+    'strawberry': 200,
+    'blue-cocktail': 100,
+    'watermelon': 50,
+    'pear': 20,
+    'apple': 10,
+    'lemon': 5,
+    'peach': 3,
+    'cherry': 2
+};
 
-for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 5; c++) {
-        const cell = document.createElement('div');
-        cell.className = 'slot-cell';
-        cell.id = `cell-${r}-${c}`;
-        cell.innerText = symbols[(r + c) % 7];
-        gridElement.appendChild(cell);
-        cells.push({ row: r, col: c, element: cell });
+// Сетка 3х3 (всего 9 ячеек)
+const rows = 3;
+const cols = 3;
+let gridData = [
+    ['strawberry', 'watermelon', 'pear'],
+    ['apple', 'lemon', 'peach'],
+    ['cherry', 'strawberry', 'blue-cocktail']
+];
+
+// Элементы интерфейса
+const balanceEl = document.getElementById('balance-val');
+const betEl = document.getElementById('bet-val');
+const linesEl = document.getElementById('lines-val');
+const slotGridEl = document.getElementById('slot-grid');
+const spinBtn = document.getElementById('btn-spin');
+const helpBtn = document.getElementById('btn-help');
+const closeHelpBtn = document.getElementById('btn-close-modal');
+const helpModal = document.getElementById('help-modal');
+const paytableContainer = document.getElementById('paytable-container');
+
+// Функция сопоставления имени символа с CSS-классом спрайта
+function getSymbolClass(sym) {
+    switch(sym) {
+        case 'strawberry': return 'symbol-strawberry';
+        case 'watermelon': return 'symbol-watermelon';
+        case 'pear': return 'symbol-pear';
+        case 'apple': return 'symbol-apple';
+        case 'lemon': return 'symbol-lemon';
+        case 'peach': return 'symbol-peach';
+        case 'cherry': return 'symbol-cherry';
+        case 'blue-cocktail': return 'symbol-cocktail';
+        default: return '';
     }
 }
 
-// Кнопки линий
-const linesContainer = document.getElementById('lines-selector');
-[1, 3, 5, 7, 9].forEach(num => {
-    const btn = document.createElement('div');
-    btn.className = `line-btn ${num === activeLines ? 'active' : ''}`;
-    btn.innerText = `${num} лин`;
-    btn.onclick = () => setLines(num);
-    btn.id = `line-btn-${num}`;
-    linesContainer.appendChild(btn);
-});
+// Рендер сетки барабанов на экране
+function renderGrid() {
+    slotGridEl.innerHTML = '';
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'slot-cell';
+            cell.id = `cell-${r}-${c}`;
+            
+            const symDiv = document.createElement('div');
+            symDiv.className = `slot-symbol ${getSymbolClass(gridData[r][c])}`;
+            
+            cell.appendChild(symDiv);
+            slotGridEl.appendChild(cell);
+        }
+    }
+}
 
+// Обновление цифр на панели управления
 function updateUI() {
-    document.getElementById('lobby-balance').innerText = balance;
-    document.getElementById('slot-balance').innerText = balance;
-    document.getElementById('ui-total-balance').innerText = balance;
-    document.getElementById('ui-total-bet').innerText = totalBet;
-    document.getElementById('ui-bet-per-line').innerText = (totalBet / activeLines).toFixed(1);
-    document.getElementById('ui-lines-count').innerText = activeLines;
-    localStorage.setItem('slot_balance', balance);
+    balanceEl.innerText = balance;
+    betEl.innerText = currentBet;
+    linesEl.innerText = linesCount;
 }
 
-function openSlot() {
-    document.getElementById('lobby-screen').style.display = 'none';
-    document.getElementById('slot-screen').style.display = 'flex';
-    updateUI();
-}
-
-function closeSlot() {
-    stopAutoPlay();
-    document.getElementById('slot-screen').style.display = 'none';
-    document.getElementById('lobby-screen').style.display = 'flex';
-}
-
-function openBetModal() {
-    if (isSpinning) return;
-    document.getElementById('bet-range').value = totalBet;
-    document.getElementById('modal-bet-val').innerText = totalBet;
-    document.getElementById('bet-modal-overlay').style.display = 'flex';
-}
-
-function onSliderChange(val) {
-    document.getElementById('modal-bet-val').innerText = val;
-}
-
-function closeBetModal() {
-    totalBet = parseInt(document.getElementById('bet-range').value);
-    document.getElementById('bet-modal-overlay').style.display = 'none';
-    updateUI();
-}
-
-function setLines(num) {
-    if (isSpinning) return;
-    activeLines = num;
-    document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`line-btn-${num}`).classList.add('active');
-    updateUI();
-}
-
-function maxBet() {
-    if (isSpinning) return;
-    totalBet = 900;
-    setLines(9);
-    updateUI();
-}
-
-function toggleAutoPlay() {
-    const btnAuto = document.getElementById('btn-auto');
-    if (!autoPlayActive) {
-        autoPlayActive = true;
-        btnAuto.classList.add('active-mode');
-        btnAuto.innerText = 'СТОП АВТО';
-        startSpin();
-    } else {
-        stopAutoPlay();
-    }
-}
-
-function stopAutoPlay() {
-    autoPlayActive = false;
-    const btnAuto = document.getElementById('btn-auto');
-    btnAuto.classList.remove('active-mode');
-    btnAuto.innerText = 'АВТОИГРА';
-    if (autoPlayTimer) {
-        clearTimeout(autoPlayTimer);
-        autoPlayTimer = null;
-    }
-}
-
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    event.target.innerText = soundEnabled ? '🔊' : '🔇';
-}
-
-// УПРАВЛЕНИЕ СПРАВКОЙ (ЛИСТЫ 1 - 5)
-function openHelp() {
-    if (isSpinning) return;
-    currentHelpPage = 1;
-    renderHelpPage();
-    document.getElementById('help-modal-overlay').style.display = 'flex';
-}
-
-function closeHelp() {
-    document.getElementById('help-modal-overlay').style.display = 'none';
-}
-
-function nextHelpPage() {
-    currentHelpPage = currentHelpPage < 5 ? currentHelpPage + 1 : 1;
-    renderHelpPage();
-}
-
-function prevHelpPage() {
-    currentHelpPage = currentHelpPage > 1 ? currentHelpPage - 1 : 5;
-    renderHelpPage();
-}
-
-function renderHelpPage() {
-    document.getElementById('help-title').innerText = `ЛИСТ ${currentHelpPage}`;
-    const content = document.getElementById('help-content');
-    
-    if (currentHelpPage === 1) {
-        content.innerHTML = `
-            <b>ВЫИГРЫШ ДО 125 000 КРЕДИТОВ</b><br><br>
-            • Ставка от 10 до 900 кредитов.<br>
-            • Игра по 9 линиям и до 100 кредитов на линию.<br>
-            • Все выигрыши по линиям суммируются.<br>
-            • Символ 🟦 (Фруктовый Коктейль) заменяет любой символ.<br>
-            <hr style="border-color:#333; margin:8px 0;">
-            <b>Схемы линий выплат:</b> Игра задействует активные линии от 1 до 9.
-        `;
-    } else if (currentHelpPage === 2) {
-        content.innerHTML = `
-            <b>ТАБЛИЦА ВЫПЛАТ (Часть 1)</b>
-            <table class="help-table">
-                <tr><td>🟦 🟦 🟦</td><td>100 кредитов</td></tr>
-                <tr><td>🟦 🟦 🟦 🟦</td><td>500 кредитов</td></tr>
-                <tr><td>🟦 🟦 🟦 🟦 🟦</td><td>2000 кредитов</td></tr>
-                <tr><td>🍉 🍉 🍉</td><td>20 кр. (500 макс)</td></tr>
-                <tr><td>🍐 🍐 🍐</td><td>10 кр. (200 макс)</td></tr>
-            </table>
-        `;
-    } else if (currentHelpPage === 3) {
-        content.innerHTML = `
-            <b>ТАБЛИЦА ВЫПЛАТ (Часть 2)</b>
-            <table class="help-table">
-                <tr><td>🍎 🍎 🍎</td><td>5 кр. (100 макс)</td></tr>
-                <tr><td>🍋 🍋 🍋</td><td>5 кр. (50 макс)</td></tr>
-                <tr><td>🍑 🍑 🍑</td><td>3 кр. (20 макс)</td></tr>
-                <tr><td>🍒 🍒 🍒</td><td>2 кр. (10 макс)</td></tr>
-            </table>
-        `;
-    } else if (currentHelpPage === 4) {
-        content.innerHTML = `
-            <b>РИСК-ИГРА С КАРТАМИ</b><br><br>
-            • Если в главной игре выпал выигрыш, можно сыграть на риск.<br>
-            • Откройте одну из четырех карт.<br>
-            • Если ваша карта старше карты дилера — выигрыш удваивается!<br>
-            • Равна — возврат, меньше — проигрыш.
-        `;
-    } else if (currentHelpPage === 5) {
-        content.innerHTML = `
-            <b>ПРИЗОВАЯ ИГРА (КЛУБНИЧКИ)</b><br><br>
-            • Выпадение 3 символов 🍓 — 1 призовая игра.<br>
-            • 4 символа — 2 игры.<br>
-            • 5 символов — 3 игры.<br>
-            Собирайте призы по линиям светящихся символов!
-        `;
-    }
-}
-
-// СБРОС ПОДСВЕТКИ ЯЧЕЕК
-function clearWinStyles() {
-    cells.forEach(item => {
-        item.element.style.borderColor = '#ffd700';
-        item.element.style.background = '#ffffff';
-    });
-}
-
-// ЗАПУСК ВРАЩЕНИЯ С ПРОВЕРКОЙ 9 ЛИНИЙ
+// Запуск вращения
 function startSpin() {
     if (isSpinning) return;
-
-    if (balance < totalBet) {
+    if (balance < currentBet) {
         alert('Недостаточно средств на балансе!');
-        stopAutoPlay();
         return;
     }
 
+    balance -= currentBet;
+    updateUI();
     isSpinning = true;
-    balance -= totalBet;
-    clearWinStyles();
-    updateUI();
+    spinBtn.disabled = true;
 
-    document.getElementById('win-msg').innerText = 'Крутим барабаны... 🎰';
-    document.getElementById('win-msg').style.color = '#fff';
+    // Очищаем прошлые подсветки
+    document.querySelectorAll('.slot-cell').forEach(cell => cell.classList.remove('winning'));
 
-    const finalMatrix = [];
-    for (let r = 0; r < 3; r++) {
-        finalMatrix[r] = [];
-        for (let c = 0; c < 5; c++) {
-            // Вероятность выпадения клубники меньше, остальных символов — равная
-            const randIdx = Math.random() < 0.08 ? 0 : Math.floor(Math.random() * (symbols.length - 1)) + 1;
-            finalMatrix[r][c] = symbols[randIdx];
+    // Эффект крутящихся барабанов (интервал смены рандомных картинок)
+    let spinTimer = setInterval(() => {
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+                gridData[r][c] = randomSym;
+                const cellDiv = document.querySelector(`#cell-${r}-${c} .slot-symbol`);
+                if (cellDiv) {
+                    cellDiv.className = `slot-symbol ${getSymbolClass(randomSym)}`;
+                }
+            }
         }
-    }
+    }, 80);
 
-    let columnsDone = 0;
-    for (let col = 0; col < 5; col++) {
-        let spinDuration = 400 + col * 250;
-        
-        let interval = setInterval(() => {
-            for (let row = 0; row < 3; row++) {
-                const randomSym = symbols[Math.floor(Math.random() * (symbols.length - 1)) + 1];
-                document.getElementById(`cell-${row}-${col}`).innerText = randomSym;
-                document.getElementById(`cell-${row}-${col}`).style.background = '#e6f2ff';
-            }
-        }, 50);
+    // Остановка через 1.5 секунды
+    setTimeout(() => {
+        clearInterval(spinTimer);
+        generateFinalGrid();
+        renderGrid();
+        checkWin();
+        isSpinning = false;
+        spinBtn.disabled = false;
+    }, 1500);
+}
 
-        setTimeout(() => {
-            clearInterval(interval);
-            for (let row = 0; row < 3; row++) {
-                const cellDiv = document.getElementById(`cell-${row}-${col}`);
-                cellDiv.innerText = finalMatrix[row][col];
-                cellDiv.style.background = '#ffffff';
-            }
-            columnsDone++;
-
-            if (columnsDone === 5) {
-                evaluateLines(finalMatrix);
-            }
-        }, spinDuration);
+// Генерация финального результата после остановки
+function generateFinalGrid() {
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+            gridData[r][c] = randomSym;
+        }
     }
 }
 
-// АЛГОРИТМ ПРОВЕРКИ ВСЕХ АКТИВНЫХ ЛИНИЙ
-function evaluateLines(matrix) {
-    let totalWin = 0;
-    const betPerLine = totalBet / activeLines;
-    const winningCellsToHighlight = [];
+// Проверка выигрышных комбинаций
+function checkWin() {
+    let roundWin = 0;
 
-    // Проверяем каждую активную линию (от 0 до activeLines - 1)
-    for (let l = 0; l < activeLines; l++) {
-        const lineRows = linesMap[l];
-        
-        // Собираем символы линии слева направо
-        const lineSymbols = [];
-        const lineCoords = [];
-        for (let c = 0; c < 5; c++) {
-            let r = lineRows[c];
-            lineSymbols.push(matrix[r][c]);
-            lineCoords.push({ row: r, col: c });
-        }
-
-        // Проверяем совпадения (минимум 3 одинаковых с начала линии или с заменной на Wild 🟦)
-        let firstSym = lineSymbols[0];
-        let matchCount = 1;
-
-        for (let c = 1; c < 5; c++) {
-            let currentSym = lineSymbols[c];
-            if (firstSym === '🟦') {
-                firstSym = currentSym; // Если первый Wild, берем следующий за него
-            }
+    // Простая проверка горизонтальных линий на выигрыш
+    for (let r = 0; r < rows; r++) {
+        const firstSym = gridData[r][0];
+        if (gridData[r][1] === firstSym && gridData[r][2] === firstSym) {
+            const multiplier = payTable[firstSym] || 0;
+            roundWin += currentBet * (multiplier / 10); // Смягченный коэффициент для баланса
             
-            if (currentSym === firstSym || currentSym === '🟦') {
-                matchCount++;
-            } else {
-                break;
-            }
-        }
-
-        // Если совпало 3 и более символов
-        if (matchCount >= 3 && firstSym !== '🍓' && payTable[firstSym]) {
-            let multiplier = payTable[firstSym][matchCount] || 0;
-            let lineWin = betPerLine * (multiplier / 10); // Смягчаем коэффициент под игровую экономику
-            totalWin += lineWin;
-
-            // Запоминаем ячейки для подсветки
-            for (let i = 0; i < matchCount; i++) {
-                winningCellsToHighlight.push(lineCoords[i]);
+            // Подсвечиваем выигрышный ряд
+            for (let c = 0; c < cols; c++) {
+                document.getElementById(`cell-${r}-${c}`).classList.add('winning');
             }
         }
     }
 
-    const msg = document.getElementById('win-msg');
-    if (totalWin > 0) {
-        balance += Math.round(totalWin);
-        msg.innerText = `🎉 ВЫИГРЫШ: +${Math.round(totalWin)} 🪙`;
-        msg.style.color = '#00ffcc';
-
-        // Подсвечиваем все выигрышные ячейки
-        winningCellsToHighlight.forEach(pos => {
-            const cell = document.getElementById(`cell-${pos.row}-${pos.col}`);
-            cell.style.borderColor = '#00ffcc';
-            cell.style.background = '#e0fdf5';
-        });
-    } else {
-        msg.innerText = 'Повезет в следующий раз!';
-        msg.style.color = '#ff5252';
-    }
-
-    updateUI();
-    isSpinning = false;
-
-    if (autoPlayActive) {
-        if (balance >= totalBet) {
-            autoPlayTimer = setTimeout(startSpin, 1400);
-        } else {
-            alert('Автоигра остановлена: недостаточно средств.');
-            stopAutoPlay();
-        }
+    if (roundWin > 0) {
+        balance += roundWin;
+        updateUI();
     }
 }
 
-updateUI();
+// Заполнение модального окна справки таблицей выплат со спрайтами
+function initPayTable() {
+    paytableContainer.innerHTML = '';
+    for (let [sym, mult] of Object.entries(payTable)) {
+        const row = document.createElement('div');
+        row.className = 'paytable-row';
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = `slot-symbol ${getSymbolClass(sym)}`;
+        iconDiv.style.width = '30px';
+        iconDiv.style.height = '30px';
+
+        const textSpan = document.createElement('span');
+        textSpan.innerText = `x${mult}`;
+        textSpan.style.color = '#ffcc00';
+        textSpan.style.fontWeight = 'bold';
+
+        row.appendChild(iconDiv);
+        row.appendChild(textSpan);
+        paytableContainer.appendChild(row);
+    }
+}
+
+// События кнопок
+spinBtn.addEventListener('click', startSpin);
+
+helpBtn.addEventListener('click', () => {
+    helpModal.classList.remove('hidden');
+});
+
+closeHelpBtn.addEventListener('click', () => {
+    helpModal.classList.add('hidden');
+});
+
+// Кнопка смены ставки
+document.getElementById('btn-bet').addEventListener('click', () => {
+    currentBet = currentBet === 10 ? 50 : currentBet === 50 ? 100 : 10;
+    updateUI();
+});
+
+// Первичная инициализация при загрузке страницы
+window.addEventListener('DOMContentLoaded', () => {
+    renderGrid();
+    updateUI();
+    initPayTable();
+});
