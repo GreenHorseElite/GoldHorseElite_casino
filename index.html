@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Lobby & Slots</title>
+    <title>Fruit Cocktail Slot</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-    <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА СТАВКИ -->
+    <!-- МОДАЛЬНОЕ ОКНО СТАВКИ -->
     <div class="modal-overlay" id="bet-modal-overlay">
         <div class="bet-modal">
             <div class="bet-modal-header">СТАВКА</div>
@@ -21,6 +21,21 @@
                     <span>МАКС <br> 900</span>
                 </div>
                 <button class="bet-ok-btn" onclick="closeBetModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО СПРАВКИ (ЛИСТЫ 1-5) -->
+    <div class="modal-overlay" id="help-modal-overlay">
+        <div class="help-modal">
+            <div class="help-header" id="help-title">ЛИСТ 1</div>
+            <div class="help-body" id="help-content">
+                <!-- Сюда динамически подгружаются страницы справки -->
+            </div>
+            <div class="help-footer">
+                <button class="help-nav-btn" onclick="prevHelpPage()">НАЗАД</button>
+                <button class="help-nav-btn help-exit" onclick="closeHelp()">ВЫХОД</button>
+                <button class="help-nav-btn" onclick="nextHelpPage()">ВПЕРЕД</button>
             </div>
         </div>
     </div>
@@ -44,14 +59,6 @@
                 <div class="game-img monkey-bg">🐵</div>
                 <div class="game-name">CRAZY MONKEY</div>
             </div>
-            <div class="game-card" onclick="alert('Скоро!')">
-                <div class="game-img resident-bg">🔥</div>
-                <div class="game-name">RESIDENT</div>
-            </div>
-            <div class="game-card" onclick="alert('Скоро!')">
-                <div class="game-img lucky-bg">⭐</div>
-                <div class="game-name">LUCKY LADY</div>
-            </div>
         </div>
 
         <div class="bottom-nav">
@@ -62,7 +69,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН ИГРЫ (ФРУКТОВЫЙ КОКТЕЙЛЬ) -->
+    <!-- ЭКРАН ИГРЫ -->
     <div class="slot-screen" id="slot-screen" style="display: none;">
         
         <div class="top-bar">
@@ -87,12 +94,11 @@
 
         <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
         <div class="control-panel">
-            
             <div class="top-buttons-row">
                 <button class="btn-action" onclick="openBetModal()">СТАВКА</button>
                 <button class="btn-action" onclick="maxBet()">МАКС СТАВКА</button>
                 <button class="btn-action" id="btn-auto" onclick="toggleAutoPlay()">АВТОИГРА</button>
-                <button class="btn-action" onclick="alert('Собирайте от 3 одинаковых символов!')">СПРАВКА</button>
+                <button class="btn-action" onclick="openHelp()">СПРАВКА</button>
             </div>
 
             <div class="center-control-row">
@@ -100,7 +106,6 @@
                 <button class="start-btn" onclick="startSpin()">СТАРТ</button>
                 <button class="btn-action" style="width: 50px; height: 50px; border-radius: 50%; font-size: 16px;" onclick="toggleSound()">🔊</button>
             </div>
-
         </div>
 
     </div>
