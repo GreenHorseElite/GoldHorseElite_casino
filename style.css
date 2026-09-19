@@ -351,3 +351,74 @@ body {
 }
 .nav-item span { font-size: 16px; }
 .nav-item.active { color: #ffd700; }
+/* МОДАЛЬНОЕ ОКНО СПРАВКИ */
+.help-modal {
+    background: #000044;
+    color: #fff;
+    width: 92%;
+    max-height: 85vh;
+    border-radius: 10px;
+    border: 2px solid #1e88e5;
+    box-shadow: 0 0 20px rgba(30, 136, 229, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.help-header {
+    background: #110033;
+    color: #ffcc00;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 14px;
+    border-bottom: 1px solid #1e88e5;
+}
+
+.help-body {
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.help-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: #110033;
+    border-top: 1px solid #1e88e5;
+}
+
+.help-nav-btn {
+    background: #4a148c;
+    border: 1px solid #ab47bc;
+    color: #fff;
+    padding: 6px 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.help-nav-btn.help-exit {
+    background: #b71c1c;
+    border-color: #e53935;
+}
+
+.help-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.help-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+}
+
+.help-table td {
+    border: 1px solid #444;
+    padding: 4px;
+    text-align: center;
+}
