@@ -423,3 +423,23 @@ body {
     text-align: center;
 }
 
+/* Контейнер символа на барабане */
+.slot-symbol {
+    width: 75px;
+    height: 75px;
+    background-image: url('spritesheet.png');
+    background-size: 400% 200%; /* Сетка 4 колонки на 2 ряда */
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+
+/* Точные координаты каждого фрукта на спрайте */
+.symbol-strawberry { background-position: 0% 0%; }
+.symbol-cocktail    { background-position: 33.3% 0%; }
+.symbol-watermelon  { background-position: 66.6% 0%; }
+.symbol-pear        { background-position: 100% 0%; }
+
+.symbol-apple       { background-position: 0% 100%; }
+.symbol-lemon       { background-position: 33.3% 100%; }
+.symbol-peach       { background-position: 66.6% 100%; }
+.symbol-cherry      { background-position: 100% 100%; }
