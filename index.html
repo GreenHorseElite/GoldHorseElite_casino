@@ -1,1 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Lobby & Slots</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
 
+    <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА СТАВКИ -->
+    <div class="modal-overlay" id="bet-modal-overlay">
+        <div class="bet-modal">
+            <div class="bet-modal-header">СТАВКА</div>
+            <div class="bet-modal-body">
+                <div class="bet-modal-value" id="modal-bet-val">10</div>
+                <input type="range" min="10" max="900" step="10" value="10" class="bet-slider" id="bet-range" oninput="onSliderChange(this.value)">
+                <div class="bet-limits">
+                    <span>МИН <br> 10</span>
+                    <span>МАКС <br> 900</span>
+                </div>
+                <button class="bet-ok-btn" onclick="closeBetModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ЛОББИ -->
+    <div class="casino-lobby" id="lobby-screen">
+        <div class="top-bar">
+            <div class="lobby-badge">ЛОББИ</div>
+            <div class="bank-box">БАНК: 16060</div>
+            <div class="balance-container">🪙 <span id="lobby-balance">11795</span></div>
+        </div>
+
+        <div class="section-title">🍒 ИГРОВЫЕ АВТОМАТЫ 🍒</div>
+
+        <div class="games-grid">
+            <div class="game-card" onclick="openSlot()">
+                <div class="game-img fruit-bg">🍓</div>
+                <div class="game-name">FRUIT COCKTAIL</div>
+            </div>
+            <div class="game-card" onclick="alert('Скоро!')">
+                <div class="game-img monkey-bg">🐵</div>
+                <div class="game-name">CRAZY MONKEY</div>
+            </div>
+            <div class="game-card" onclick="alert('Скоро!')">
+                <div class="game-img resident-bg">🔥</div>
+                <div class="game-name">RESIDENT</div>
+            </div>
+            <div class="game-card" onclick="alert('Скоро!')">
+                <div class="game-img lucky-bg">⭐</div>
+                <div class="game-name">LUCKY LADY</div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active"><span>🎰</span><p>Слоты</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>🏆</span><p>Турниры</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>📊</span><p>Лидеры</p></div>
+            <div class="nav-item" onclick="alert('Скоро')"><span>🎁</span><p>Бонусы</p></div>
+        </div>
+    </div>
+
+    <!-- ЭКРАН ИГРЫ (ФРУКТОВЫЙ КОКТЕЙЛЬ) -->
+    <div class="slot-screen" id="slot-screen" style="display: none;">
+        
+        <div class="top-bar">
+            <div class="lobby-badge" onclick="closeSlot()">⬅ ЛОББИ</div>
+            <div class="bank-box">БАНК: 16060</div>
+            <div class="balance-container">🪙 <span id="slot-balance">11795</span></div>
+        </div>
+
+        <div class="slot-header-info">
+            <span>Ставка/лин: <b id="ui-bet-per-line">1</b></span>
+            <span>Линий: <b id="ui-lines-count">9</b></span>
+            <span>Баланс: <b id="ui-total-balance">11795</b></span>
+            <span>Полная ставка: <b id="ui-total-bet">90</b></span>
+        </div>
+
+        <!-- ИГРОВОЕ ПОЛЕ 5х3 -->
+        <div class="slot-machine-container">
+            <div class="slot-grid" id="slot-grid"></div>
+        </div>
+
+        <div class="win-line-msg" id="win-msg">Крути и выигрывай!</div>
+
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+        <div class="control-panel">
+            
+            <div class="top-buttons-row">
+                <button class="btn-action" onclick="openBetModal()">СТАВКА</button>
+                <button class="btn-action" onclick="maxBet()">МАКС СТАВКА</button>
+                <button class="btn-action" id="btn-auto" onclick="toggleAutoPlay()">АВТОИГРА</button>
+                <button class="btn-action" onclick="alert('Собирайте от 3 одинаковых символов!')">СПРАВКА</button>
+            </div>
+
+            <div class="center-control-row">
+                <div class="lines-selector" id="lines-selector"></div>
+                <button class="start-btn" onclick="startSpin()">СТАРТ</button>
+                <button class="btn-action" style="width: 50px; height: 50px; border-radius: 50%; font-size: 16px;" onclick="toggleSound()">🔊</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="fruit-cocktail.js"></script>
+</body>
+</html>
