@@ -8,10 +8,36 @@ let isSpinning = false;
 let autoPlayActive = false;
 let autoPlayTimer = null;
 let soundEnabled = true;
+let currentHelpPage = 1;
 
-const symbols = ['🍓', '🍉', '🍎', '🍑', '🍐', '🍒', '🍋', '🍇'];
+// Символы: 🍓(клубника - бонус), 🍉(арбуз), 🍐(груша), 🍎(яблоко), 🍋(лимон), 🍑(персик), 🍒(вишня), 🟦(коктейль - вайлд)
+const symbols = ['🍓', '🍉', '🍐', '🍎', '🍋', '🍑', '🍒', '🟦'];
 
-// Сетка 5 колонок по 3 ряда (сохраняем элементы ячеек)
+// Коэффициенты выплат за 3, 4, 5 символов в линии
+const payTable = {
+    '🟦': { 3: 100, 4: 500, 5: 2000 }, // Коктейль (Wild)
+    '🍉': { 3: 20,  4: 100, 5: 500  }, // Арбуз
+    '🍐': { 3: 10,  4: 50,  5: 200  }, // Груша
+    '🍎': { 3: 5,   4: 20,  5: 100  }, // Яблоко
+    '🍋': { 3: 5,   4: 10,  5: 50   }, // Лимон
+    '🍑': { 3: 3,   4: 5,   5: 20   }, // Персик
+    '🍒': { 3: 2,   4: 3,   5: 10   }  // Вишня
+};
+
+// 9 классических линий выплат (индексы строк 0, 1, 2 для колонок 0..4)
+const linesMap = [
+    [1, 1, 1, 1, 1], // Линия 1: центр
+    [0, 0, 0, 0, 0], // Линия 2: верх
+    [2, 2, 2, 2, 2], // Линия 3: низ
+    [0, 1, 2, 1, 0], // Линия 4: V-образная
+    [2, 1, 0, 1, 2], // Линия 5: Λ-образная
+    [0, 0, 1, 2, 2], // Линия 6
+    [2, 2, 1, 0, 0], // Линия 7
+    [1, 0, 1, 0, 1], // Линия 8
+    [1, 2, 1, 2, 1]  // Линия 9
+];
+
+// Генерация сетки 5х3
 const gridElement = document.getElementById('slot-grid');
 const cells = [];
 
@@ -20,13 +46,13 @@ for (let r = 0; r < 3; r++) {
         const cell = document.createElement('div');
         cell.className = 'slot-cell';
         cell.id = `cell-${r}-${c}`;
-        cell.innerText = symbols[(r + c) % symbols.length];
+        cell.innerText = symbols[(r + c) % 7];
         gridElement.appendChild(cell);
         cells.push({ row: r, col: c, element: cell });
     }
 }
 
-// Генерация кнопок линий
+// Кнопки линий
 const linesContainer = document.getElementById('lines-selector');
 [1, 3, 5, 7, 9].forEach(num => {
     const btn = document.createElement('div');
@@ -44,7 +70,6 @@ function updateUI() {
     document.getElementById('ui-total-bet').innerText = totalBet;
     document.getElementById('ui-bet-per-line').innerText = (totalBet / activeLines).toFixed(1);
     document.getElementById('ui-lines-count').innerText = activeLines;
-    
     localStorage.setItem('slot_balance', balance);
 }
 
@@ -120,6 +145,82 @@ function toggleSound() {
     event.target.innerText = soundEnabled ? '🔊' : '🔇';
 }
 
+// УПРАВЛЕНИЕ СПРАВКОЙ (ЛИСТЫ 1 - 5)
+function openHelp() {
+    if (isSpinning) return;
+    currentHelpPage = 1;
+    renderHelpPage();
+    document.getElementById('help-modal-overlay').style.display = 'flex';
+}
+
+function closeHelp() {
+    document.getElementById('help-modal-overlay').style.display = 'none';
+}
+
+function nextHelpPage() {
+    currentHelpPage = currentHelpPage < 5 ? currentHelpPage + 1 : 1;
+    renderHelpPage();
+}
+
+function prevHelpPage() {
+    currentHelpPage = currentHelpPage > 1 ? currentHelpPage - 1 : 5;
+    renderHelpPage();
+}
+
+function renderHelpPage() {
+    document.getElementById('help-title').innerText = `ЛИСТ ${currentHelpPage}`;
+    const content = document.getElementById('help-content');
+    
+    if (currentHelpPage === 1) {
+        content.innerHTML = `
+            <b>ВЫИГРЫШ ДО 125 000 КРЕДИТОВ</b><br><br>
+            • Ставка от 10 до 900 кредитов.<br>
+            • Игра по 9 линиям и до 100 кредитов на линию.<br>
+            • Все выигрыши по линиям суммируются.<br>
+            • Символ 🟦 (Фруктовый Коктейль) заменяет любой символ.<br>
+            <hr style="border-color:#333; margin:8px 0;">
+            <b>Схемы линий выплат:</b> Игра задействует активные линии от 1 до 9.
+        `;
+    } else if (currentHelpPage === 2) {
+        content.innerHTML = `
+            <b>ТАБЛИЦА ВЫПЛАТ (Часть 1)</b>
+            <table class="help-table">
+                <tr><td>🟦 🟦 🟦</td><td>100 кредитов</td></tr>
+                <tr><td>🟦 🟦 🟦 🟦</td><td>500 кредитов</td></tr>
+                <tr><td>🟦 🟦 🟦 🟦 🟦</td><td>2000 кредитов</td></tr>
+                <tr><td>🍉 🍉 🍉</td><td>20 кр. (500 макс)</td></tr>
+                <tr><td>🍐 🍐 🍐</td><td>10 кр. (200 макс)</td></tr>
+            </table>
+        `;
+    } else if (currentHelpPage === 3) {
+        content.innerHTML = `
+            <b>ТАБЛИЦА ВЫПЛАТ (Часть 2)</b>
+            <table class="help-table">
+                <tr><td>🍎 🍎 🍎</td><td>5 кр. (100 макс)</td></tr>
+                <tr><td>🍋 🍋 🍋</td><td>5 кр. (50 макс)</td></tr>
+                <tr><td>🍑 🍑 🍑</td><td>3 кр. (20 макс)</td></tr>
+                <tr><td>🍒 🍒 🍒</td><td>2 кр. (10 макс)</td></tr>
+            </table>
+        `;
+    } else if (currentHelpPage === 4) {
+        content.innerHTML = `
+            <b>РИСК-ИГРА С КАРТАМИ</b><br><br>
+            • Если в главной игре выпал выигрыш, можно сыграть на риск.<br>
+            • Откройте одну из четырех карт.<br>
+            • Если ваша карта старше карты дилера — выигрыш удваивается!<br>
+            • Равна — возврат, меньше — проигрыш.
+        `;
+    } else if (currentHelpPage === 5) {
+        content.innerHTML = `
+            <b>ПРИЗОВАЯ ИГРА (КЛУБНИЧКИ)</b><br><br>
+            • Выпадение 3 символов 🍓 — 1 призовая игра.<br>
+            • 4 символа — 2 игры.<br>
+            • 5 символов — 3 игры.<br>
+            Собирайте призы по линиям светящихся символов!
+        `;
+    }
+}
+
 // СБРОС ПОДСВЕТКИ ЯЧЕЕК
 function clearWinStyles() {
     cells.forEach(item => {
@@ -128,7 +229,7 @@ function clearWinStyles() {
     });
 }
 
-// ЗАПУСК ВРАЩЕНИЯ С ПОСЛЕДОВАТЕЛЬНОЙ ОСТАНОВКОЙ КОЛОНОК
+// ЗАПУСК ВРАЩЕНИЯ С ПРОВЕРКОЙ 9 ЛИНИЙ
 function startSpin() {
     if (isSpinning) return;
 
@@ -146,42 +247,30 @@ function startSpin() {
     document.getElementById('win-msg').innerText = 'Крутим барабаны... 🎰';
     document.getElementById('win-msg').style.color = '#fff';
 
-    // Генерируем финальную матрицу 3 ряда на 5 колонок
     const finalMatrix = [];
-    const isWinner = Math.random() < 0.5; // 50% шанс на выигрыш
-    const winSym = symbols[Math.floor(Math.random() * symbols.length)];
-
     for (let r = 0; r < 3; r++) {
         finalMatrix[r] = [];
         for (let c = 0; c < 5; c++) {
-            finalMatrix[r][c] = symbols[Math.floor(Math.random() * symbols.length)];
+            // Вероятность выпадения клубники меньше, остальных символов — равная
+            const randIdx = Math.random() < 0.08 ? 0 : Math.floor(Math.random() * (symbols.length - 1)) + 1;
+            finalMatrix[r][c] = symbols[randIdx];
         }
     }
 
-    // Если выигрыш, делаем совпадение в центральном ряду (ряд 1) для первых 3-х колонок
-    if (isWinner) {
-        finalMatrix[1][0] = winSym;
-        finalMatrix[1][1] = winSym;
-        finalMatrix[1][2] = winSym;
-    }
-
-    // Запускаем анимацию кручения по колонкам (каждая колонка останавливается чуть позже)
     let columnsDone = 0;
-
     for (let col = 0; col < 5; col++) {
-        let spinDuration = 400 + col * 300; // Колонка 0 крутится быстро, колонка 4 дольше всех
+        let spinDuration = 400 + col * 250;
         
         let interval = setInterval(() => {
             for (let row = 0; row < 3; row++) {
-                const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+                const randomSym = symbols[Math.floor(Math.random() * (symbols.length - 1)) + 1];
                 document.getElementById(`cell-${row}-${col}`).innerText = randomSym;
-                document.getElementById(`cell-${row}-${col}`).style.background = '#e6f2ff'; // Эффект размытия
+                document.getElementById(`cell-${row}-${col}`).style.background = '#e6f2ff';
             }
-        }, 60);
+        }, 50);
 
         setTimeout(() => {
             clearInterval(interval);
-            // Устанавливаем точные финальные символы для этой колонки
             for (let row = 0; row < 3; row++) {
                 const cellDiv = document.getElementById(`cell-${row}-${col}`);
                 cellDiv.innerText = finalMatrix[row][col];
@@ -190,32 +279,73 @@ function startSpin() {
             columnsDone++;
 
             if (columnsDone === 5) {
-                checkWinCondition(finalMatrix);
+                evaluateLines(finalMatrix);
             }
         }, spinDuration);
     }
 }
 
-// ПРОВЕРКА ВЫИГРЫША И ПОДСВЕТКА ЛИНИИ
-function checkWinCondition(matrix) {
-    let win = 0;
-    // Проверяем центральную линию (ряд 1, колонки 0, 1, 2)
-    if (matrix[1][0] === matrix[1][1] && matrix[1][1] === matrix[1][2]) {
-        win = totalBet * (Math.floor(Math.random() * 4) + 2);
+// АЛГОРИТМ ПРОВЕРКИ ВСЕХ АКТИВНЫХ ЛИНИЙ
+function evaluateLines(matrix) {
+    let totalWin = 0;
+    const betPerLine = totalBet / activeLines;
+    const winningCellsToHighlight = [];
+
+    // Проверяем каждую активную линию (от 0 до activeLines - 1)
+    for (let l = 0; l < activeLines; l++) {
+        const lineRows = linesMap[l];
+        
+        // Собираем символы линии слева направо
+        const lineSymbols = [];
+        const lineCoords = [];
+        for (let c = 0; c < 5; c++) {
+            let r = lineRows[c];
+            lineSymbols.push(matrix[r][c]);
+            lineCoords.push({ row: r, col: c });
+        }
+
+        // Проверяем совпадения (минимум 3 одинаковых с начала линии или с заменной на Wild 🟦)
+        let firstSym = lineSymbols[0];
+        let matchCount = 1;
+
+        for (let c = 1; c < 5; c++) {
+            let currentSym = lineSymbols[c];
+            if (firstSym === '🟦') {
+                firstSym = currentSym; // Если первый Wild, берем следующий за него
+            }
+            
+            if (currentSym === firstSym || currentSym === '🟦') {
+                matchCount++;
+            } else {
+                break;
+            }
+        }
+
+        // Если совпало 3 и более символов
+        if (matchCount >= 3 && firstSym !== '🍓' && payTable[firstSym]) {
+            let multiplier = payTable[firstSym][matchCount] || 0;
+            let lineWin = betPerLine * (multiplier / 10); // Смягчаем коэффициент под игровую экономику
+            totalWin += lineWin;
+
+            // Запоминаем ячейки для подсветки
+            for (let i = 0; i < matchCount; i++) {
+                winningCellsToHighlight.push(lineCoords[i]);
+            }
+        }
     }
 
     const msg = document.getElementById('win-msg');
-    if (win > 0) {
-        balance += win;
-        msg.innerText = `🎉 ВЫИГРЫШ: +${win} 🪙 (ЛИНИЯ 1)`;
+    if (totalWin > 0) {
+        balance += Math.round(totalWin);
+        msg.innerText = `🎉 ВЫИГРЫШ: +${Math.round(totalWin)} 🪙`;
         msg.style.color = '#00ffcc';
 
-        // Подсвечиваем выигрышные ячейки яркой рамкой (как на скриншоте линии)
-        for (let c = 0; c < 3; c++) {
-            const winningCell = document.getElementById(`cell-1-${c}`);
-            winningCell.style.borderColor = '#00ffcc';
-            winningCell.style.background = '#e0fdf5';
-        }
+        // Подсвечиваем все выигрышные ячейки
+        winningCellsToHighlight.forEach(pos => {
+            const cell = document.getElementById(`cell-${pos.row}-${pos.col}`);
+            cell.style.borderColor = '#00ffcc';
+            cell.style.background = '#e0fdf5';
+        });
     } else {
         msg.innerText = 'Повезет в следующий раз!';
         msg.style.color = '#ff5252';
