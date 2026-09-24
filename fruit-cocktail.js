@@ -284,18 +284,90 @@ function startSpin() {
         }, spinDuration);
     }
 }
+// Цвета линий как в оригинале (или любые на твой выбор для каждой из 9 линий)
+const lineColors = [
+    '#00ff00', // 1: Зеленая (верх)
+    '#ffa500', // 2: Оранжевая (зигзаг)
+    '#ff0000', // 3: Красная (центр)
+    '#ffff00', // 4: Желтая (зигзаг)
+    '#0000ff', // 5: Синяя (низ)
+    '#ff00ff', // 6: Розовая (верхняя ломаная)
+    '#ffffff', // 7: Белая (центр ломаная)
+    '#00ffff', // 8: Голубая (нижняя ломаная)
+    '#008000'  // 9: Темно-зеленая (низ ломаная)
+];
 
-// ИСПРАВЛЕННЫЙ АЛГОРИТМ ПРОВЕРКИ ЛИНИЙ (В ОБЕ СТОРОНЫ + WILD)
+// Функция отрисовки целой линии через все 5 барабанов
+function drawWinningLines(winningLinesIndices) {
+    const canvas = document.getElementById('lines-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Подгоняем размеры canvas под реальный размер сетки
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cols = 5;
+    const rows = 3;
+    const cellWidth = canvas.width / cols;
+    const cellHeight = canvas.height / rows;
+
+    winningLinesIndices.forEach(lineIdx => {
+        const lineRows = linesMap[lineIdx];
+        ctx.beginPath();
+        ctx.strokeStyle = lineColors[lineIdx % lineColors.length];
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = ctx.strokeStyle; // Эффект неонового свечения линии
+
+        for (let c = 0; c < cols; c++) {
+            let r = lineRows[c];
+            // Центр ячейки по X и Y
+            let x = c * cellWidth + cellWidth / 2;
+            let y = r * cellHeight + cellHeight / 2;
+
+            if (c === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                // Делаем плавные углы или прямые отрезки по точкам
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+    });
+}
+
+// Очистка линий при следующем спине
+function clearLinesCanvas() {
+    const canvas = document.getElementById('lines-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Убираем старые стили с ячеек (если остались от прошлой версии)
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 5; c++) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            if (cell) {
+                cell.style.borderColor = '';
+                cell.style.background = '';
+            }
+        }
+    }
+}
+
 function evaluateLines(matrix) {
     let totalWin = 0;
     const betPerLine = totalBet / activeLines;
-    const winningCellsToHighlight = new Set();
+    const winningLinesIndices = []; // Список индексов линий, которые выиграли
+
+    clearLinesCanvas(); // Стираем старые линии перед новой оценкой
 
     // Проверяем каждую активную линию
     for (let l = 0; l < activeLines; l++) {
         const lineRows = linesMap[l];
         
-        // Собираем символы линии слева направо
         const symbolsLeftToRight = [];
         const coordsLeftToRight = [];
         for (let c = 0; c < 5; c++) {
@@ -304,69 +376,58 @@ function evaluateLines(matrix) {
             coordsLeftToRight.push({ row: r, col: c });
         }
 
-        // Функция для подсчета совпадений в массиве символов
-        function checkDirection(syms, coords) {
+        function checkDirection(syms) {
             let targetSymbol = null;
             let matchCount = 0;
-            let currentWinningCoords = [];
 
             for (let i = 0; i < syms.length; i++) {
                 let current = syms[i];
-
-                if (current === '🍓') break; // Бонусные символы по линиям не играют (только скаттеры от 3х штук)
+                if (current === '🍓') break; // Бонусные символы по линиям не играют
 
                 if (targetSymbol === null) {
                     if (current === '🟦') {
-                        // Если начали с вайлда, ждем конкретный символ дальше
                         matchCount++;
-                        currentWinningCoords.push(coords[i]);
                     } else {
                         targetSymbol = current;
                         matchCount++;
-                        currentWinningCoords.push(coords[i]);
                     }
                 } else {
                     if (current === targetSymbol || current === '🟦') {
                         matchCount++;
-                        currentWinningCoords.push(coords[i]);
                     } else {
-                        break; // Цепочка прервалась
+                        break;
                     }
                 }
             }
-
-            // Если первый был вайлд, а дальше шли только вайлды
-            if (targetSymbol === null && matchCount > 0) {
-                targetSymbol = '🟦';
-            }
+            if (targetSymbol === null && matchCount > 0) targetSymbol = '🟦';
 
             if (matchCount >= 3 && targetSymbol && payTable[targetSymbol]) {
-                return { count: matchCount, symbol: targetSymbol, coords: currentWinningCoords };
+                return { count: matchCount, symbol: targetSymbol };
             }
             return null;
         }
 
-        // 1. Проверяем слева направо
-        let winL2R = checkDirection(symbolsLeftToRight, coordsLeftToRight);
+        // Проверяем слева направо
+        let winL2R = checkDirection(symbolsLeftToRight);
+        let isWinningLine = false;
+
         if (winL2R) {
             let multiplier = payTable[winL2R.symbol][winL2R.count] || 0;
-            let lineWin = betPerLine * (multiplier / 10);
-            totalWin += lineWin;
-            winL2R.coords.forEach(pos => winningCellsToHighlight.add(`${pos.row}-${pos.col}`));
+            totalWin += betPerLine * (multiplier / 10);
+            isWinningLine = true;
+        } else {
+            // Проверяем справа налево
+            let symbolsRightToLeft = [...symbolsLeftToRight].reverse();
+            let winR2L = checkDirection(symbolsRightToLeft);
+            if (winR2L) {
+                let multiplier = payTable[winR2L.symbol][winR2L.count] || 0;
+                totalWin += betPerLine * (multiplier / 10);
+                isWinningLine = true;
+            }
         }
 
-        // 2. Проверяем справа налево (переворачиваем массивы)
-        let symbolsRightToLeft = [...symbolsLeftToRight].reverse();
-        let coordsRightToLeft = [...coordsLeftToRight].reverse();
-        let winR2L = checkDirection(symbolsRightToLeft, coordsRightToLeft);
-        
-        // Засчитываем справа налево только если слева направо не было выигрыша по этой же линии, 
-        // чтобы избежать двойного начисления за 5 одинаковых символов в центре
-        if (winR2L && !winL2R) {
-            let multiplier = payTable[winR2L.symbol][winR2L.count] || 0;
-            let lineWin = betPerLine * (multiplier / 10);
-            totalWin += lineWin;
-            winR2L.coords.forEach(pos => winningCellsToHighlight.add(`${pos.row}-${pos.col}`));
+        if (isWinningLine) {
+            winningLinesIndices.push(l); // Запоминаем индекс выигравшей линии
         }
     }
 
@@ -376,15 +437,8 @@ function evaluateLines(matrix) {
         msg.innerText = `🎉 ВЫИГРЫШ: +${Math.round(totalWin)} 🪙`;
         msg.style.color = '#00ffcc';
 
-        // Подсвечиваем все выигрышные ячейки
-        winningCellsToHighlight.forEach(cellKey => {
-            let [r, c] = cellKey.split('-');
-            const cell = document.getElementById(`cell-${r}-${c}`);
-            if (cell) {
-                cell.style.borderColor = '#00ffcc';
-                cell.style.background = '#e0fdf5';
-            }
-        });
+        // Рисуем линии поверх барабанов на Canvas
+        drawWinningLines(winningLinesIndices);
     } else {
         msg.innerText = 'Повезет в следующий раз!';
         msg.style.color = '#ff5252';
