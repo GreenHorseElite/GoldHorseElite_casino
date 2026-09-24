@@ -285,52 +285,88 @@ function startSpin() {
     }
 }
 
-// АЛГОРИТМ ПРОВЕРКИ ВСЕХ АКТИВНЫХ ЛИНИЙ
+// ИСПРАВЛЕННЫЙ АЛГОРИТМ ПРОВЕРКИ ЛИНИЙ (В ОБЕ СТОРОНЫ + WILD)
 function evaluateLines(matrix) {
     let totalWin = 0;
     const betPerLine = totalBet / activeLines;
-    const winningCellsToHighlight = [];
+    const winningCellsToHighlight = new Set();
 
-    // Проверяем каждую активную линию (от 0 до activeLines - 1)
+    // Проверяем каждую активную линию
     for (let l = 0; l < activeLines; l++) {
         const lineRows = linesMap[l];
         
         // Собираем символы линии слева направо
-        const lineSymbols = [];
-        const lineCoords = [];
+        const symbolsLeftToRight = [];
+        const coordsLeftToRight = [];
         for (let c = 0; c < 5; c++) {
             let r = lineRows[c];
-            lineSymbols.push(matrix[r][c]);
-            lineCoords.push({ row: r, col: c });
+            symbolsLeftToRight.push(matrix[r][c]);
+            coordsLeftToRight.push({ row: r, col: c });
         }
 
-        // Проверяем совпадения (минимум 3 одинаковых с начала линии или с заменной на Wild 🟦)
-        let firstSym = lineSymbols[0];
-        let matchCount = 1;
+        // Функция для подсчета совпадений в массиве символов
+        function checkDirection(syms, coords) {
+            let targetSymbol = null;
+            let matchCount = 0;
+            let currentWinningCoords = [];
 
-        for (let c = 1; c < 5; c++) {
-            let currentSym = lineSymbols[c];
-            if (firstSym === '🟦') {
-                firstSym = currentSym; // Если первый Wild, берем следующий за него
+            for (let i = 0; i < syms.length; i++) {
+                let current = syms[i];
+
+                if (current === '🍓') break; // Бонусные символы по линиям не играют (только скаттеры от 3х штук)
+
+                if (targetSymbol === null) {
+                    if (current === '🟦') {
+                        // Если начали с вайлда, ждем конкретный символ дальше
+                        matchCount++;
+                        currentWinningCoords.push(coords[i]);
+                    } else {
+                        targetSymbol = current;
+                        matchCount++;
+                        currentWinningCoords.push(coords[i]);
+                    }
+                } else {
+                    if (current === targetSymbol || current === '🟦') {
+                        matchCount++;
+                        currentWinningCoords.push(coords[i]);
+                    } else {
+                        break; // Цепочка прервалась
+                    }
+                }
             }
-            
-            if (currentSym === firstSym || currentSym === '🟦') {
-                matchCount++;
-            } else {
-                break;
+
+            // Если первый был вайлд, а дальше шли только вайлды
+            if (targetSymbol === null && matchCount > 0) {
+                targetSymbol = '🟦';
             }
+
+            if (matchCount >= 3 && targetSymbol && payTable[targetSymbol]) {
+                return { count: matchCount, symbol: targetSymbol, coords: currentWinningCoords };
+            }
+            return null;
         }
 
-        // Если совпало 3 и более символов
-        if (matchCount >= 3 && firstSym !== '🍓' && payTable[firstSym]) {
-            let multiplier = payTable[firstSym][matchCount] || 0;
-            let lineWin = betPerLine * (multiplier / 10); // Смягчаем коэффициент под игровую экономику
+        // 1. Проверяем слева направо
+        let winL2R = checkDirection(symbolsLeftToRight, coordsLeftToRight);
+        if (winL2R) {
+            let multiplier = payTable[winL2R.symbol][winL2R.count] || 0;
+            let lineWin = betPerLine * (multiplier / 10);
             totalWin += lineWin;
+            winL2R.coords.forEach(pos => winningCellsToHighlight.add(`${pos.row}-${pos.col}`));
+        }
 
-            // Запоминаем ячейки для подсветки
-            for (let i = 0; i < matchCount; i++) {
-                winningCellsToHighlight.push(lineCoords[i]);
-            }
+        // 2. Проверяем справа налево (переворачиваем массивы)
+        let symbolsRightToLeft = [...symbolsLeftToRight].reverse();
+        let coordsRightToLeft = [...coordsLeftToRight].reverse();
+        let winR2L = checkDirection(symbolsRightToLeft, coordsRightToLeft);
+        
+        // Засчитываем справа налево только если слева направо не было выигрыша по этой же линии, 
+        // чтобы избежать двойного начисления за 5 одинаковых символов в центре
+        if (winR2L && !winL2R) {
+            let multiplier = payTable[winR2L.symbol][winR2L.count] || 0;
+            let lineWin = betPerLine * (multiplier / 10);
+            totalWin += lineWin;
+            winR2L.coords.forEach(pos => winningCellsToHighlight.add(`${pos.row}-${pos.col}`));
         }
     }
 
@@ -341,10 +377,13 @@ function evaluateLines(matrix) {
         msg.style.color = '#00ffcc';
 
         // Подсвечиваем все выигрышные ячейки
-        winningCellsToHighlight.forEach(pos => {
-            const cell = document.getElementById(`cell-${pos.row}-${pos.col}`);
-            cell.style.borderColor = '#00ffcc';
-            cell.style.background = '#e0fdf5';
+        winningCellsToHighlight.forEach(cellKey => {
+            let [r, c] = cellKey.split('-');
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            if (cell) {
+                cell.style.borderColor = '#00ffcc';
+                cell.style.background = '#e0fdf5';
+            }
         });
     } else {
         msg.innerText = 'Повезет в следующий раз!';
@@ -363,5 +402,6 @@ function evaluateLines(matrix) {
         }
     }
 }
+
 
 updateUI();
